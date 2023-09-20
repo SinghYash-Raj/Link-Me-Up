@@ -3,7 +3,7 @@ const chats = [
     isGroupChat: false,
     users: [
       {
-        name: "John Doe",
+        name: "John Doedoe",
         email: "john@example.com",
       },
       {
