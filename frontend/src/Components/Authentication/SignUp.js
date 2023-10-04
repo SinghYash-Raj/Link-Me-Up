@@ -36,7 +36,7 @@ const SignUp = () => {
       toast({
         title: "Please Select an Image!",
         status: "Warning",
-        duration: 5000,
+        duration: 3000,
         isClosable: true,
         position: "bottom",
       });
@@ -127,6 +127,7 @@ const SignUp = () => {
       localStorage.setItem("userInfo", JSON.stringify(data));
 
       setPicLoading(false);
+      window.location.reload(false);
       history.push("/chats");
     } catch (error) {
       toast({

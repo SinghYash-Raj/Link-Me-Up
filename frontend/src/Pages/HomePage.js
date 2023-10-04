@@ -19,6 +19,7 @@ const HomePage = () => {
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
 
     if (userInfo) {
+      //window.location.reload(false);
       history.push("/chats");
     }
   }, [history]);

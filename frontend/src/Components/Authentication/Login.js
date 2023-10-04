@@ -27,7 +27,7 @@ const Login = () => {
       toast({
         title: "Please Fill all the Feilds",
         status: "warning",
-        duration: 5000,
+        duration: 3000,
         isClosable: true,
         position: "bottom",
       });
@@ -53,7 +53,7 @@ const Login = () => {
       toast({
         title: "Login Successful",
         status: "success",
-        duration: 5000,
+        duration: 3000,
         isClosable: true,
         position: "bottom",
       });
@@ -61,6 +61,7 @@ const Login = () => {
       localStorage.setItem("userInfo", JSON.stringify(data));
 
       setPicLoading(false);
+      window.location.reload(false); // resolved refreshing issue
       history.push("/chats");
     } catch (error) {
       toast({

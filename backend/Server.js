@@ -6,6 +6,7 @@ const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const cors = require("cors");
+const messageRoutes = require("./routes/messageRoutes");
 
 //const path = require("path");
 //require("dotenv").config({ path: path.resolve(__dirname + "./.env") });
@@ -18,12 +19,18 @@ app.use(cors());
 
 const PORT = process.env.PORT || 5000;
 
+app.use((req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
+  next();
+});
+
 app.get("/", (req, res) => {
   res.send("API is running");
 });
 
 app.use("/api/user", userRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/message", messageRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

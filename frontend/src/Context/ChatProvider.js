@@ -15,6 +15,7 @@ const ChatProvider = ({ children }) => {
     setUser(userInfo);
 
     if (!userInfo) {
+      //window.location.reload(false);
       history.push("/");
     }
   }, [history]);
