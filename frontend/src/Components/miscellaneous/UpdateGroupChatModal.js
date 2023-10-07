@@ -16,7 +16,7 @@ import {
   useDisclosure,
   useToast,
 } from "@chakra-ui/react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChatState } from "../../Context/ChatProvider";
 import UserBadgeItem from "../UserAvatar/UserBadgeItem";
 import axios from "axios";
@@ -29,9 +29,18 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain }) => {
   const [searchResult, setSearchResult] = useState([]);
   const [loading, setLoading] = useState(false);
   const [renameloading, setRenameLoading] = useState(false);
+  const [adminName, setAdminName] = useState("");
+
   const toast = useToast();
 
   const { selectedChat, setSelectedChat, user } = ChatState();
+
+  useEffect(() => {
+    // Set the admin's name if available
+    if (selectedChat.groupAdmin) {
+      setAdminName(selectedChat.groupAdmin.name);
+    }
+  }, [selectedChat]);
 
   const handleRename = async () => {
     if (!groupChatName) return;
@@ -218,7 +227,6 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain }) => {
     }
     setGroupChatName("");
   };
-
   return (
     <>
       <IconButton
@@ -249,6 +257,23 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain }) => {
                   handleFunction={() => handleRemove(u)}
                 />
               ))}
+              {adminName && (
+                <p
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    position: "absolute",
+                    bottom: "0",
+                    left: "0",
+                    marginLeft: "8px",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {user._id === selectedChat.groupAdmin._id
+                    ? "Admin: You"
+                    : `Admin: ${adminName}`}
+                </p>
+              )}
             </Box>
             <FormControl display="flex">
               <Input

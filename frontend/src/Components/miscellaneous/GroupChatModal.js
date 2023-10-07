@@ -44,7 +44,7 @@ const GroupChatModal = ({ children }) => {
         },
       };
       const { data } = await axios.get(`/api/user?search=${search}`, config);
-      console.log(data);
+      //console.log(data);
       setLoading(false);
       setSearchResult(data);
     } catch (error) {
@@ -158,7 +158,7 @@ const GroupChatModal = ({ children }) => {
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </FormControl>
-            <Box w="100%" display="flex" flexWrap="wrap">
+            <Box width="100%" display="flex" flexWrap="wrap">
               {selectedUsers.map((u) => (
                 <UserBadgeItem
                   key={u._id}

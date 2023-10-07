@@ -5,7 +5,7 @@ const {
   allMessages,
 } = require("../controllers/messageController");
 
-const router = express.Router(); //Multiple requests can be easily differentiated with the help of the Router() function in Express.
+const router = express.Router();
 
 router.route("/").post(protect, sendMessage);
 router.route("/:chatId").get(protect, allMessages);
