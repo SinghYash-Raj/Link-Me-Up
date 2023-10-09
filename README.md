@@ -1,10 +1,6 @@
 # Link-Me-Up
 Real Time Chat Application
 
-# Chat Application (MERN Stack)
-
-![Chat Application Demo](link-to-demo-gif-or-screenshot)
-
 ## Table of Contents
 
 - [Introduction](#introduction)
