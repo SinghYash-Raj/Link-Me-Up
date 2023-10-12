@@ -127,7 +127,7 @@ const SignUp = () => {
       localStorage.setItem("userInfo", JSON.stringify(data));
 
       setPicLoading(false);
-      window.location.reload(false);
+      window.location.reload(false); //ressolved issue of rendering chat page after  refreshing
       history.push("/chats");
     } catch (error) {
       toast({

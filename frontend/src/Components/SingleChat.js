@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { ChatState } from "../Context/ChatProvider";
 import {
   Box,
@@ -16,6 +16,15 @@ import { getSender, getSenderFull } from "../config/ChatLogics";
 import ProfileModal from "./miscellaneous/profileModal";
 import UpdateGroupChatModal from "./miscellaneous/UpdateGroupChatModal";
 import axios from "axios";
+import "./styles.css";
+import ScrollableChat from "./ScrollableChat";
+import io from "socket.io-client";
+import Lottie from "react-lottie";
+import animationData from "../animations/typing.json";
+
+//connecting socket server side to client side
+const ENDPOINT = "http://localhost:5000";
+var socket, selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [messages, setMessages] = useState([]);
@@ -23,8 +32,22 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [newMessage, setNewMessage] = useState();
   const [isInputEmpty, setInputEmpty] = useState(true); // Track if the input field is empty
   const [messageSent, setMessageSent] = useState(false); // Track if a message has been sent
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+
+  const defaultOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: animationData,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
+
   const toast = useToast();
-  const { user, selectedChat, setSelectedChat } = ChatState();
+  const { user, selectedChat, setSelectedChat, notification, setNotification } =
+    ChatState();
 
   //Handling  ForwardArrow key press
   const handleKeyPress = (event) => {
@@ -33,8 +56,76 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }
   };
 
+  //Fetching all messages
+  const fetchMessages = useCallback(async () => {
+    if (!selectedChat) return;
+
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+
+      setLoading(true);
+
+      const { data } = await axios.get(
+        `/api/message/${selectedChat._id}`,
+        config
+      );
+      setMessages(data);
+      setLoading(false);
+
+      socket.emit("join chat", selectedChat._id);
+    } catch (error) {
+      toast({
+        title: "Error Occured!",
+        description: "Failed to Load the Messages",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "bottom",
+      });
+    }
+  }, [selectedChat, user.token, toast]);
+  //console.log(messages);
+
+  //connecting socket server side to client side
+  useEffect(() => {
+    socket = io(ENDPOINT);
+    socket.emit("setup", user);
+    socket.on("connected", () => setSocketConnected(true));
+    socket.on("typing", () => setIsTyping(true));
+    socket.on("stoptyping", () => setIsTyping(false));
+  }, []);
+
+  useEffect(() => {
+    fetchMessages();
+    selectedChatCompare = selectedChat;
+  }, [selectedChat, fetchMessages]);
+
+  useEffect(() => {
+    socket.on("Message Recived", (newMessageRecived) => {
+      if (
+        !selectedChatCompare ||
+        selectedChatCompare._id !== newMessageRecived.chat._id
+      ) {
+        //if any new messages recived from user other than selected one then show notification
+        //give notification
+
+        if (!notification.includes(newMessageRecived)) {
+          setNotification([newMessageRecived, ...notification]);
+          setFetchAgain(!fetchAgain);
+        }
+      } else {
+        setMessages([...messages, newMessageRecived]);
+      }
+    });
+  });
+
   const sendMessage = async (event) => {
     if (newMessage) {
+      socket.emit("stop typing", selectedChat._id);
       try {
         const config = {
           headers: {
@@ -52,6 +143,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           config
         );
         console.log(data);
+
+        socket.emit("New Message", data);
         setMessages([...messages, data]);
         setMessageSent(true); // Message has been sent
       } catch (error) {
@@ -66,11 +159,31 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       }
     }
   };
+
   const typingHandler = (e) => {
     setNewMessage(e.target.value);
     setInputEmpty(e.target.value === ""); // Check if the input field is empty
     setMessageSent(false); // Reset messageSent when typing again
     //Typing Indicator Logic
+
+    if (!socketConnected) return;
+
+    if (!typing) {
+      setTyping(true);
+      socket.emit("typing", selectedChat._id);
+    }
+
+    //when to stop displaying typing
+    let lastTypingTime = new Date().getTime();
+    var timerLength = 3000; //stop showing typing after 3sec
+    setTimeout(() => {
+      var timeNow = new Date().getTime();
+      var timeDiff = timeNow - lastTypingTime;
+      if (timeDiff >= timerLength && typing) {
+        socket.emit("stoptyping", selectedChat._id);
+        setTyping(false);
+      }
+    }, timerLength);
   };
   return (
     <>
@@ -102,6 +215,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 <UpdateGroupChatModal
                   fetchAgain={fetchAgain}
                   setFetchAgain={setFetchAgain}
+                  fetchMessages={fetchMessages}
                 />
               </>
             )}
@@ -126,19 +240,35 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 margin="auto"
               />
             ) : (
-              <div>{/*Messages */}</div>
+              <div className="message">
+                {/*Messages */}
+                <ScrollableChat messages={messages} />
+              </div>
             )}
             <FormControl isRequired mt={3}>
+              {isTyping ? (
+                <div>
+                  <Lottie
+                    options={defaultOptions}
+                    // height={50}
+                    width={70}
+                    style={{ marginBottom: 15, marginLeft: 0 }}
+                  />
+                </div>
+              ) : (
+                <></>
+              )}
               <InputGroup>
                 {/*<InputRightElement
                   pointerEvents="none"
                   children={<ArrowForwardIcon color="gray.800" />}
                 />*/}
+
                 <Input
                   variant="filled"
                   bg="#E0E0E0"
                   placeholder="Type a message"
-                  onChange={typingHandler}
+                  onChange={typingHandler} // on anychange(press key) this function will run
                   onKeyDown={handleKeyPress}
                   value={newMessage}
                   style={{

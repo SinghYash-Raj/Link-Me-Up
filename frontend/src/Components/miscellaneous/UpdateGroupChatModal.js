@@ -22,7 +22,7 @@ import UserBadgeItem from "../UserAvatar/UserBadgeItem";
 import axios from "axios";
 import UserListItem from "../UserAvatar/UserListItem";
 
-const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain }) => {
+const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessage }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [groupChatName, setGroupChatName] = useState();
   const [search, setSearch] = useState("");
@@ -209,6 +209,7 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain }) => {
         setSelectedChat(response.data); // Check if 'data' is present in the response
       }
       setFetchAgain(!fetchAgain);
+      fetchMessage();
       setLoading(false);
     } catch (error) {
       console.error("Error Occurred:", error);

@@ -7,6 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 import ChatProvider from "./Context/ChatProvider";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
+// ChatProvider should be wrapped inside BrowserRouter to Avoid history.push undefined error
 root.render(
   <BrowserRouter>
     <ChatProvider>

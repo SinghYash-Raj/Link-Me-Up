@@ -34,4 +34,49 @@ app.use("/api/message", messageRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
-app.listen(PORT, console.log(`Server Started on PORT ${PORT}`));
+const server = app.listen(PORT, console.log(`Server Started on PORT ${PORT}`));
+
+const io = require("socket.io")(server, {
+  pingTimeout: 60000,
+  cors: {
+    origin: "http://localhost:3000",
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("connected to socket.io");
+
+  socket.on("setup", (userData) => {
+    socket.join(userData._id);
+    //console.log(userData._id);
+    socket.emit("connected");
+  });
+
+  socket.on("join chat", (room) => {
+    socket.join(room);
+    console.log("user joined Room:" + room);
+  });
+
+  //creating new socket for typing
+  socket.on("typing", (room) => socket.in(room).emit("typing"));
+  socket.on("stoptyping", (room) => socket.in(room).emit("stoptyping"));
+
+  //send message functionality
+  socket.on("New Message", (newMessageRecived) => {
+    var chat = newMessageRecived.chat;
+
+    if (!chat.users) return console.log("chat.users not defined");
+
+    chat.users.forEach((user) => {
+      if (user._id == newMessageRecived.sender._id) return;
+
+      // "in" means inside that user's room, emit/send that message
+      socket.in(user._id).emit("Message Recived", newMessageRecived);
+    });
+  });
+
+  socket.off("setup", () => {
+    console.log("USER DISCONNECTED");
+    socket.leave(userData._id);
+  });
+});
